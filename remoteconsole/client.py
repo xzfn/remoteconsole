@@ -32,6 +32,9 @@ def run_once(server_address, input, more):
 		s = input('... ')
 	else:
 		s = input('>>> ')
+	if s == '\x1A':  # Ctrl-Z on win32
+		raise EOFError
+
 	request_data = {
 		'type': 'run',
 		'line': s
@@ -49,6 +52,8 @@ def run_repl(server_address):
 			more = run_once(server_address, input, more)
 		except KeyboardInterrupt:
 			print('KeyboardInterrupt')
+		except EOFError:
+			break
 
 def parse_address():
 	import sys

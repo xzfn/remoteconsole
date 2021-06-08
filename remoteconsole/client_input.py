@@ -1,4 +1,8 @@
 
+
+AUTO_SPLIT_LINES = True
+
+
 _has_readline = False
 try:
 	import readline
@@ -64,13 +68,32 @@ def setup(send_request, server_address):
 	if _has_readline:
 		readline.parse_and_bind('tab: complete')
 		readline.set_completer(ReadlineCompleter(send_request, server_address).complete)
-		return input
+		input_func = input
 	elif _has_prompt_toolkit:
 		session = prompt_toolkit.PromptSession(
 			complete_while_typing=False,
 			complete_style=prompt_toolkit.shortcuts.CompleteStyle.READLINE_LIKE,
 			completer=PromptToolkitCompleter(send_request, server_address)
 		)
-		return session.prompt
+		input_func = session.prompt
 	else:
-		return input
+		input_func = input
+
+	if AUTO_SPLIT_LINES:
+		return SplitLinesInputWrapper(input_func).input
+	else:
+		return input_func
+
+class SplitLinesInputWrapper:
+	"""Split lines from input. Treat one-time multiple-line input as multiple one-line input."""
+	def __init__(self, raw_input):
+		self.raw_input = raw_input
+		self.cached_lines = []
+
+	def input(self, prompt=None):
+		if not self.cached_lines:
+			raw_str = self.raw_input(prompt)
+			if '\n' not in raw_str:
+				return raw_str
+			self.cached_lines = raw_str.split('\n')
+		return self.cached_lines.pop(0)
