@@ -31,11 +31,17 @@ def complete(namespace, line, greedy=True):
 		greedy_text = GREEDY_DELIMS_RE.split(line)[-1]
 		if '.' in greedy_text and text != greedy_text:
 			greedy_before_text = line[:len(line) - len(greedy_text)]
-			greedy_matches = _gready_attr_matches(completer, greedy_text)
+			greedy_matches = _greedy_attr_matches(completer, greedy_text)
 			final_matches = [greedy_before_text + match for match in greedy_matches]
+		if not final_matches:
+			# try use entire line, no delimiter
+			more_greedy_text = line
+			if '.' in more_greedy_text and text != more_greedy_text and greedy_text != more_greedy_text:
+				final_matches = _greedy_attr_matches(completer, more_greedy_text)
+
 	return final_matches
 
-def _gready_attr_matches(completer, text):
+def _greedy_attr_matches(completer, text):
 	# slight modify from rlcompleter.py attr_matches
 	dot_pos = text.rfind('.')
 	expr, attr = text[:dot_pos], text[dot_pos+1:]
